@@ -1,0 +1,37 @@
+[
+  {
+    "nombre": "Repsol - Calle Alcalá",
+    "cp": "28001",
+    "precio": 1.55,
+    "lat": 40.4215,
+    "lng": -3.6800
+  },
+  {
+    "nombre": "Cepsa - Atocha",
+    "cp": "28012",
+    "precio": 1.52,
+    "lat": 40.4087,
+    "lng": -3.6900
+  },
+  {
+    "nombre": "BP - Chamartín",
+    "cp": "28036",
+    "precio": 1.58,
+    "lat": 40.4683,
+    "lng": -3.6764
+  },
+  {
+    "nombre": "Shell - Plaza Castilla",
+    "cp": "28046",
+    "precio": 1.50,
+    "lat": 40.4669,
+    "lng": -3.6892
+  },
+  {
+    "nombre": "Galp - Lavapiés",
+    "cp": "28012",
+    "precio": 1.53,
+    "lat": 40.4080,
+    "lng": -3.7000
+  }
+]

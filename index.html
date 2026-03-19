@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gasolineras</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Buscar gasolineras</h1>
+
+  <input 
+  type="text" 
+  id="cp" 
+  placeholder="Código postal"
+  maxlength="5"
+  inputmode="numeric"
+  pattern="[0-9]*"
+/>
+  <button id="buscar">Buscar</button>
+  <button id="orden-asc">Precio ↑</button>
+  <button id="orden-desc">Precio ↓</button>
+
+  <div id="resultados"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
