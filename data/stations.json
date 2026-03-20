@@ -1,37 +1,26 @@
 [
-  {
-    "nombre": "Repsol - Calle Alcalá",
-    "cp": "28001",
-    "precio": 1.55,
-    "lat": 40.4215,
-    "lng": -3.6800
-  },
-  {
-    "nombre": "Cepsa - Atocha",
-    "cp": "28012",
-    "precio": 1.52,
-    "lat": 40.4087,
-    "lng": -3.6900
-  },
-  {
-    "nombre": "BP - Chamartín",
-    "cp": "28036",
-    "precio": 1.58,
-    "lat": 40.4683,
-    "lng": -3.6764
-  },
-  {
-    "nombre": "Shell - Plaza Castilla",
-    "cp": "28046",
-    "precio": 1.50,
-    "lat": 40.4669,
-    "lng": -3.6892
-  },
-  {
-    "nombre": "Galp - Lavapiés",
-    "cp": "28012",
-    "precio": 1.53,
-    "lat": 40.4080,
-    "lng": -3.7000
-  }
+  { "nombre": "Repsol - Alcalá", "cp": "28001", "precio": 1.55, "lat": 40.4215, "lng": -3.6800 },
+  { "nombre": "Cepsa - Atocha", "cp": "28012", "precio": 1.52, "lat": 40.4087, "lng": -3.6900 },
+  { "nombre": "BP - Chamartín", "cp": "28036", "precio": 1.58, "lat": 40.4683, "lng": -3.6764 },
+  { "nombre": "Shell - Plaza Castilla", "cp": "28046", "precio": 1.50, "lat": 40.4669, "lng": -3.6892 },
+  { "nombre": "Galp - Lavapiés", "cp": "28012", "precio": 1.53, "lat": 40.4080, "lng": -3.7000 },
+
+  { "nombre": "Repsol - Getafe Centro", "cp": "28901", "precio": 1.49, "lat": 40.3083, "lng": -3.7320 },
+  { "nombre": "Cepsa - Leganés Norte", "cp": "28914", "precio": 1.47, "lat": 40.3400, "lng": -3.7630 },
+  { "nombre": "BP - Alcorcón", "cp": "28922", "precio": 1.51, "lat": 40.3450, "lng": -3.8240 },
+  { "nombre": "Shell - Fuenlabrada", "cp": "28941", "precio": 1.48, "lat": 40.2840, "lng": -3.8000 },
+  { "nombre": "Galp - Móstoles", "cp": "28931", "precio": 1.46, "lat": 40.3220, "lng": -3.8640 },
+
+  { "nombre": "Repsol - Alcobendas", "cp": "28100", "precio": 1.57, "lat": 40.5400, "lng": -3.6400 },
+  { "nombre": "Cepsa - San Sebastián de los Reyes", "cp": "28701", "precio": 1.56, "lat": 40.5500, "lng": -3.6300 },
+  { "nombre": "BP - Tres Cantos", "cp": "28760", "precio": 1.54, "lat": 40.6000, "lng": -3.7100 },
+  { "nombre": "Shell - Colmenar Viejo", "cp": "28770", "precio": 1.52, "lat": 40.6600, "lng": -3.7700 },
+
+  { "nombre": "Repsol - Pozuelo", "cp": "28223", "precio": 1.53, "lat": 40.4350, "lng": -3.8130 },
+  { "nombre": "Cepsa - Majadahonda", "cp": "28220", "precio": 1.51, "lat": 40.4730, "lng": -3.8700 },
+  { "nombre": "BP - Las Rozas", "cp": "28230", "precio": 1.50, "lat": 40.4900, "lng": -3.8800 },
+
+  { "nombre": "Shell - Coslada", "cp": "28821", "precio": 1.49, "lat": 40.4250, "lng": -3.5650 },
+  { "nombre": "Galp - Torrejón", "cp": "28850", "precio": 1.48, "lat": 40.4550, "lng": -3.4750 },
+  { "nombre": "Repsol - Alcalá de Henares", "cp": "28801", "precio": 1.47, "lat": 40.4820, "lng": -3.3630 }
 ]

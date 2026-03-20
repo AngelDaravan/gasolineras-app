@@ -1,21 +1,130 @@
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
+  background-color: #f7f7f7;
 }
 
-input, button {
-  padding: 8px;
-  margin: 5px;
+h1 {
+  margin-bottom: 20px;
+}
+
+.buscador {
+  background: white;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.buscador input[type="text"] {
+  padding: 10px;
+  margin-bottom: 12px;
+  width: 200px;
+}
+
+.filtro-distancia {
+  margin-bottom: 12px;
+}
+
+.filtro-distancia label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.controles-orden {
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px 14px;
+  margin-right: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #f0f0f0;
 }
 
 .resultado {
   border: 1px solid #ccc;
+  background: white;
   margin-top: 10px;
-  padding: 10px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.resultado-destacado {
+  border: 2px solid #999;
+  background-color: #f9f9f9;
+}
+
+.titulo-bloque {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+  margin-right: 6px;
+  border-radius: 14px;
+}
+
+.tag-barata {
+  background-color: #d1fae5;
+}
+
+.tag-cercana {
+  background-color: #dbeafe;
+}
+
+.tag-mejor {
+  background-color: #fef3c7;
+}
+
+.descripcion {
+  margin: 5px 0 10px 0;
+  font-size: 13px;
+  color: #555;
 }
 
 .mensaje {
   color: #666;
   font-style: italic;
   margin-top: 10px;
+}
+
+.filtro-prioridad {
+  margin-bottom: 12px;
+}
+
+.filtro-prioridad label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.tag-favorita {
+  background-color: #ffe4e6;
+}
+
+.boton-favorito {
+  margin-top: 10px;
+}
+
+#favoritasInicio .resultado {
+  cursor: pointer;
+}
+
+#favoritasInicio .resultado:hover {
+  background-color: #f0f0f0;
 }
