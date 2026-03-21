@@ -8,6 +8,8 @@ const controles = document.getElementById("controlesOrden");
 const sliderPrioridad = document.getElementById("prioridadScore");
 const textoPrioridad = document.getElementById("textoPrioridad");
 
+const botonPruebaJson = document.getElementById("prueba-json");
+
 console.log(sliderDistancia);
 console.log(valorDistancia);
 
@@ -103,6 +105,26 @@ boton.addEventListener("click", async () => {
   } catch (error) {
     mostrarError("Ha ocurrido un error al cargar los datos");
     console.error(error);
+  }
+});
+
+// PRUEBA JSON
+botonPruebaJson.addEventListener("click", async () => {
+  try {
+    const respuesta = await fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/");
+
+    if (!respuesta.ok) {
+      throw new Error(`Error HTTP: ${respuesta.status}`);
+    }
+
+    const datos = await respuesta.json();
+    console.log("Respuesta completa de la API:", datos);
+
+    if (Array.isArray(datos.ListaEESSPrecio)) {
+      console.log("ListaEESSPrecio:", datos.ListaEESSPrecio);
+    }
+  } catch (error) {
+    console.error("Error al hacer fetch del JSON:", error);
   }
 });
 
