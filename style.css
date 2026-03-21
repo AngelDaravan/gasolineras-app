@@ -128,3 +128,16 @@ button:hover {
 #favoritasInicio .resultado:hover {
   background-color: #f0f0f0;
 }
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.estado-prioridad {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #555;
+}
