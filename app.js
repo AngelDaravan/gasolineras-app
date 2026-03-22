@@ -44,18 +44,24 @@ boton.addEventListener("click", async () => {
 
   // try - catch
   try {
-    const resStations = await fetch("data/stations.json");
-    const resPostalCodes = await fetch("data/postal_codes.json");
 
-    if (!resStations.ok || !resPostalCodes.ok) {
+    const resStations = await fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/");
+    if (!resStations.ok) {
       throw new Error("No se pudieron cargar los datos");
     }
 
-    const stations = await resStations.json();
-    const postalCodes = await resPostalCodes.json();
-    // Filtrar estaciones por código postal
-    //Guardar datos en una variable global
-    const codigoPostalUsuario = postalCodes.find(item => item.cp === cp);
+    const datosAPI = await resStations.json();
+    const stations = Array.isArray(datosAPI.ListaEESSPrecio)
+      ? datosAPI.ListaEESSPrecio
+        .map(transformarEstacionAPI)
+        .filter(st =>
+          Number.isFinite(st.precio) &&
+          Number.isFinite(st.lat) &&
+          Number.isFinite(st.lng)
+        )
+      : [];
+
+    const codigoPostalUsuario = await getCP(cp);
 
     if (!codigoPostalUsuario) {
       mostrarError("No se encontraron coordenadas para ese código postal");
@@ -109,6 +115,7 @@ boton.addEventListener("click", async () => {
 });
 
 // PRUEBA JSON
+/*
 botonPruebaJson.addEventListener("click", async () => {
   try {
     const respuesta = await fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/");
@@ -127,6 +134,7 @@ botonPruebaJson.addEventListener("click", async () => {
     console.error("Error al hacer fetch del JSON:", error);
   }
 });
+*/
 
 //Solo permitir números en el código postal
 inputCP.addEventListener("input", () => {
@@ -410,8 +418,22 @@ async function mostrarFavoritasInicio() {
   }
 
   try {
-    const res = await fetch("data/stations.json");
-    const stations = await res.json();
+    const res = await fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/");
+
+    if (!res.ok) {
+      throw new Error("No se pudieron cargar las favoritas");
+    }
+
+    const datosAPI = await res.json();
+    const stations = Array.isArray(datosAPI.ListaEESSPrecio)
+      ? datosAPI.ListaEESSPrecio
+        .map(transformarEstacionAPI)
+        .filter(st =>
+          Number.isFinite(st.precio) &&
+          Number.isFinite(st.lat) &&
+          Number.isFinite(st.lng)
+        )
+      : [];
 
     const favoritas = stations.filter(st => favoritos.includes(st.nombre));
 
@@ -453,5 +475,53 @@ async function mostrarFavoritasInicio() {
     console.error("Error al cargar favoritas iniciales:", error);
   }
 }
+
+function transformarEstacionAPI(st) {
+  return {
+    nombre: st["Rótulo"] + " " + st["Dirección"],
+    cp: st["C.P."],
+    precio: parsearNumeroAPI(st["Precio Gasoleo A"]),
+    lat: parsearNumeroAPI(st["Latitud"]),
+    lng: parsearNumeroAPI(st["Longitud (WGS84)"])
+
+  };
+}
+
+function parsearNumeroAPI(valor) {
+  if (typeof valor !== "string") {
+    return Number.NaN;
+  }
+
+  const numero = parseFloat(valor.replace(",", ".").trim());
+  return Number.isFinite(numero) ? numero : Number.NaN;
+}
+
+async function getCP(cp) {
+  const url = `https://secure.geonames.org/postalCodeSearchJSON?postalcode=${cp}&country=ES&username=Daravan`;
+
+  try {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error(`Error HTTP: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (data.postalCodes && data.postalCodes.length > 0) {
+      return {
+        cp,
+        lat: Number(data.postalCodes[0].lat),
+        lng: Number(data.postalCodes[0].lng)
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error consultando GeoNames:", error);
+    return null;
+  }
+}
+
 
 mostrarFavoritasInicio();
