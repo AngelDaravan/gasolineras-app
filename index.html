@@ -6,51 +6,50 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <h1>⛽ Buscar gasolineras</h1>
 
-<div class="buscador">
-  <input 
-    type="text" 
-    id="cp" 
-    placeholder="Código postal"
-    maxlength="5"
-    inputmode="numeric"
-    pattern="[0-9]*"
-  />
+  <div class="panel-superior">
+    <div class="buscador">
+      <input
+        type="text"
+        id="cp"
+        placeholder="Codigo postal"
+        maxlength="5"
+        inputmode="numeric"
+        pattern="[0-9]*"
+      />
 
-  <div class="filtro-distancia">
-    <label for="distanciaMax">
-      Distancia máxima: <span id="valorDistancia">10</span> km
-    </label>
-    <input type="range" id="distanciaMax" min="1" max="20" value="10">
+      <div class="filtro-distancia">
+        <label for="distanciaMax">
+          Distancia maxima: <span id="valorDistancia">10</span> km
+        </label>
+        <input type="range" id="distanciaMax" min="1" max="20" value="10">
+      </div>
+
+      <div class="filtro-prioridad">
+        <label>Prioridad</label>
+        <span id="textoPrioridad">Equilibrado</span>
+
+        <div class="slider-labels">
+          <span>📍 Distancia</span>
+          <input type="range" id="prioridadScore" min="0" max="100" value="50">
+          <span>💸 Precio</span>
+        </div>
+      </div>
+
+      <button id="buscar">🔎 Buscar</button>
+    </div>
+
+    <div id="favoritasInicio"></div>
   </div>
 
-  <div class="filtro-prioridad">
-  <label>Prioridad</label>
-  <span id="textoPrioridad">Equilibrado</span>
-
-  <div class="slider-labels">
-    <span>📍 Distancia</span>
-    <input type="range" id="prioridadScore" min="0" max="100" value="50">
-    <span>💸 Precio</span>
+  <div id="controlesOrden" class="controles-orden" style="display: none;">
+    <button id="orden-asc">💸 Mas barato</button>
+    <button id="orden-desc">💰 Mas caro</button>
+    <button id="orden-distancia">📍 Mas cercano</button>
   </div>
-  
-</div>
 
-  <button id="buscar">🔎 Buscar</button>
-  <!-- <button id="prueba-json">🧪 Prueba JSON</button> -->
-  
-</div>
-
-<div id="controlesOrden" class="controles-orden" style="display: none;">
-  <button id="orden-asc">💸 Más barato</button>
-  <button id="orden-desc">💰 Más caro</button>
-  <button id="orden-distancia">📍 Más cercano</button>
-</div>
-
-<div id="favoritasInicio"></div>
-<div id="resultados"></div>
+  <div id="resultados"></div>
 
   <script src="app.js"></script>
 </body>

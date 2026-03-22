@@ -33,6 +33,10 @@ h1 {
 }
 
 .controles-orden {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
@@ -121,6 +125,14 @@ button:hover {
   margin-top: 10px;
 }
 
+#favoritasInicio,
+.buscador {
+  background: white;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
 #favoritasInicio .resultado {
   cursor: pointer;
 }
@@ -129,15 +141,106 @@ button:hover {
   background-color: #f0f0f0;
 }
 
+.filtro-prioridad input[type="range"] {
+  width: 180px;
+}
+
 .slider-labels {
   display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 5px;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
 }
 
 .estado-prioridad {
   margin-top: 5px;
   font-size: 13px;
   color: #555;
+}
+
+.skeleton-bloque {
+  margin-top: 10px;
+}
+
+.skeleton-card {
+  border: 1px solid #ccc;
+  background: white;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e5e7eb;
+  border-radius: 8px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.2s infinite;
+}
+
+.skeleton-heading {
+  height: 22px;
+  width: 220px;
+  margin-bottom: 14px;
+}
+
+.skeleton-tag {
+  height: 22px;
+  width: 90px;
+  margin-bottom: 10px;
+}
+
+.skeleton-title {
+  height: 18px;
+  width: 70%;
+  margin-bottom: 10px;
+}
+
+.skeleton-line {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+  width: 55%;
+  margin-bottom: 0;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.panel-superior {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.panel-superior > .buscador,
+.panel-superior > #favoritasInicio {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .panel-superior {
+    grid-template-columns: 1fr;
+  }
 }

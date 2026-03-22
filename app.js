@@ -1,4 +1,7 @@
 let resultadosActuales = [];
+let estacionesCache = null;
+let cargando = false;
+let combustibleSeleccionado = "gasoleoA";
 
 const boton = document.getElementById("buscar");
 const inputCP = document.getElementById("cp");
@@ -7,7 +10,6 @@ const valorDistancia = document.getElementById("valorDistancia");
 const controles = document.getElementById("controlesOrden");
 const sliderPrioridad = document.getElementById("prioridadScore");
 const textoPrioridad = document.getElementById("textoPrioridad");
-
 const botonPruebaJson = document.getElementById("prueba-json");
 
 console.log(sliderDistancia);
@@ -29,10 +31,15 @@ document.getElementById("orden-distancia").addEventListener("click", () => {
 //mostar el valor del slider para distancia
 sliderDistancia.addEventListener("input", () => {
   valorDistancia.textContent = sliderDistancia.value;
-  //console.log("slider movido:", sliderDistancia.value);
 });
 
 boton.addEventListener("click", async () => {
+  if (cargando) return; // 🚫 bloquea spam
+
+  cargando = true;
+  boton.disabled = true;
+  boton.textContent = "⏳ Buscando...";
+  
   const cp = inputCP.value.trim();
 
   //comprobar formato cp
@@ -44,22 +51,9 @@ boton.addEventListener("click", async () => {
 
   // try - catch
   try {
+    mostrarSkeletonResultados();
 
-    const resStations = await fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/");
-    if (!resStations.ok) {
-      throw new Error("No se pudieron cargar los datos");
-    }
-
-    const datosAPI = await resStations.json();
-    const stations = Array.isArray(datosAPI.ListaEESSPrecio)
-      ? datosAPI.ListaEESSPrecio
-        .map(transformarEstacionAPI)
-        .filter(st =>
-          Number.isFinite(st.precio) &&
-          Number.isFinite(st.lat) &&
-          Number.isFinite(st.lng)
-        )
-      : [];
+    const stations = await cargarEstaciones();
 
     const codigoPostalUsuario = await getCP(cp);
 
@@ -69,24 +63,6 @@ boton.addEventListener("click", async () => {
     }
 
     const distanciaMaxima = Number(sliderDistancia.value);
-
-    resultadosActuales = stations
-      //gestión del json y cada elemento
-      .map(st => {
-        const distancia = calcularDistancia(
-          codigoPostalUsuario.lat,
-          codigoPostalUsuario.lng,
-          st.lat,
-          st.lng
-        );
-
-        return {
-          ...st,
-          distancia: distancia
-        };
-      })
-      .filter(st => st.distancia <= distanciaMaxima)
-      .sort((a, b) => a.distancia - b.distancia);
 
     const listaConDistancias = stations
       .map(st => {
@@ -102,7 +78,7 @@ boton.addEventListener("click", async () => {
           distancia: distancia
         };
       })
-      .filter(st => st.distancia <= distanciaMaxima);
+      .filter(st => st.distancia <= distanciaMaxima && tienePrecioSeleccionado(st));
 
     resultadosActuales = calcularScore(listaConDistancias)
       .sort((a, b) => a.distancia - b.distancia);
@@ -111,30 +87,13 @@ boton.addEventListener("click", async () => {
   } catch (error) {
     mostrarError("Ha ocurrido un error al cargar los datos");
     console.error(error);
+  } finally {
+    // 🔓 siempre se ejecuta
+    cargando = false;
+    boton.disabled = false;
+    boton.textContent = "🔎 Buscar";
   }
 });
-
-// PRUEBA JSON
-/*
-botonPruebaJson.addEventListener("click", async () => {
-  try {
-    const respuesta = await fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/");
-
-    if (!respuesta.ok) {
-      throw new Error(`Error HTTP: ${respuesta.status}`);
-    }
-
-    const datos = await respuesta.json();
-    console.log("Respuesta completa de la API:", datos);
-
-    if (Array.isArray(datos.ListaEESSPrecio)) {
-      console.log("ListaEESSPrecio:", datos.ListaEESSPrecio);
-    }
-  } catch (error) {
-    console.error("Error al hacer fetch del JSON:", error);
-  }
-});
-*/
 
 //Solo permitir números en el código postal
 inputCP.addEventListener("input", () => {
@@ -166,14 +125,15 @@ function calcularScore(lista) {
   const pesoPrecio = prioridad / 100;
   const pesoDistancia = 1 - pesoPrecio;
 
-  const minPrecio = Math.min(...lista.map(st => st.precio));
-  const maxPrecio = Math.max(...lista.map(st => st.precio));
+  const minPrecio = Math.min(...lista.map(obtenerPrecioSeleccionado));
+  const maxPrecio = Math.max(...lista.map(obtenerPrecioSeleccionado));
   const minDistancia = Math.min(...lista.map(st => st.distancia));
   const maxDistancia = Math.max(...lista.map(st => st.distancia));
 
   return lista.map(st => {
+    const precioSeleccionado = obtenerPrecioSeleccionado(st);
     const precioNormalizado =
-      maxPrecio === minPrecio ? 0 : (st.precio - minPrecio) / (maxPrecio - minPrecio);
+      maxPrecio === minPrecio ? 0 : (precioSeleccionado - minPrecio) / (maxPrecio - minPrecio);
 
     const distanciaNormalizada =
       maxDistancia === minDistancia ? 0 : (st.distancia - minDistancia) / (maxDistancia - minDistancia);
@@ -215,7 +175,7 @@ function mostrarResultados(lista) {
   );
 
   const estacionMasBarata = lista.reduce((min, st) =>
-    st.precio < min.precio ? st : min
+    obtenerPrecioSeleccionado(st) < obtenerPrecioSeleccionado(min) ? st : min
   );
 
   const estacionMejorOpcion = lista.reduce((min, st) =>
@@ -282,7 +242,7 @@ function mostrarResultados(lista) {
       <p class="descripcion">${descripcion}</p>
       <strong>${st.nombre}</strong><br>
       Código postal: ${st.cp}<br>
-      Precio: ${st.precio}€<br>
+      Precio: ${obtenerPrecioSeleccionado(st)}€<br>
       Distancia: ${st.distancia.toFixed(2)} km<br>
       Score: ${st.score.toFixed(3)}<br>
       <button onclick="toggleFavorito('${st.nombre}')">
@@ -313,7 +273,7 @@ function mostrarResultados(lista) {
       div.innerHTML = `
         <strong>${st.nombre}</strong><br>
         Código postal: ${st.cp}<br>
-        Precio: ${st.precio}€<br>
+        Precio: ${obtenerPrecioSeleccionado(st)}€<br>
         Distancia: ${st.distancia.toFixed(2)} km<br>
         Score: ${st.score.toFixed(3)}<br>
         <button onclick="toggleFavorito('${st.nombre}')">
@@ -326,23 +286,49 @@ function mostrarResultados(lista) {
   }
 }
 
+function crearSkeletonCard() {
+  return `
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-tag"></div>
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+    </div>
+  `;
+}
+
+function mostrarSkeletonResultados() {
+  const contenedor = document.getElementById("resultados");
+
+  mostrarControles(false);
+  contenedor.innerHTML = `
+    <div class="skeleton-bloque">
+      <div class="skeleton skeleton-heading"></div>
+      ${crearSkeletonCard()}
+      ${crearSkeletonCard()}
+      ${crearSkeletonCard()}
+    </div>
+  `;
+}
+
+function mostrarSkeletonFavoritas() {
+  const contenedor = document.getElementById("favoritasInicio");
+
+  contenedor.innerHTML = `
+    <div class="skeleton-bloque">
+      <div class="skeleton skeleton-heading"></div>
+      ${crearSkeletonCard()}
+      ${crearSkeletonCard()}
+    </div>
+  `;
+}
+
 function mostrarError(msg) {
   const contenedor = document.getElementById("resultados");
   
   mostrarControles(false);
   contenedor.innerHTML = `<p class="mensaje">${msg}</p>`;
-}
-
-function ordenarResultados(tipo) {
-  if (resultadosActuales.length === 0) return;
-
-  if (tipo === "asc") {
-    resultadosActuales.sort((a, b) => a.precio - b.precio);
-  } else {
-    resultadosActuales.sort((a, b) => b.precio - a.precio);
-  }
-
-  mostrarResultados(resultadosActuales);
 }
 
 function calcularDistancia(lat1, lon1, lat2, lon2) {
@@ -367,9 +353,9 @@ function ordenarResultados(tipo) {
   if (resultadosActuales.length === 0) return;
 
   if (tipo === "asc") {
-    resultadosActuales.sort((a, b) => a.precio - b.precio);
+    resultadosActuales.sort((a, b) => obtenerPrecioSeleccionado(a) - obtenerPrecioSeleccionado(b));
   } else if (tipo === "desc") {
-    resultadosActuales.sort((a, b) => b.precio - a.precio);
+    resultadosActuales.sort((a, b) => obtenerPrecioSeleccionado(b) - obtenerPrecioSeleccionado(a));
   } else if (tipo === "distancia") {
     resultadosActuales.sort((a, b) => a.distancia - b.distancia);
   }
@@ -418,28 +404,20 @@ async function mostrarFavoritasInicio() {
   }
 
   try {
-    const res = await fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/");
+    mostrarSkeletonFavoritas();
 
-    if (!res.ok) {
-      throw new Error("No se pudieron cargar las favoritas");
-    }
+    const stations = await cargarEstaciones();
 
-    const datosAPI = await res.json();
-    const stations = Array.isArray(datosAPI.ListaEESSPrecio)
-      ? datosAPI.ListaEESSPrecio
-        .map(transformarEstacionAPI)
-        .filter(st =>
-          Number.isFinite(st.precio) &&
-          Number.isFinite(st.lat) &&
-          Number.isFinite(st.lng)
-        )
-      : [];
-
-    const favoritas = stations.filter(st => favoritos.includes(st.nombre));
+    const favoritas = stations.filter(st =>
+      favoritos.includes(st.nombre) && tienePrecioSeleccionado(st)
+    );
 
     if (favoritas.length === 0) {
+      contenedor.innerHTML = "";
       return;
     }
+
+    contenedor.innerHTML = "";
 
     const titulo = document.createElement("h2");
     titulo.textContent = "❤️ Tus gasolineras favoritas";
@@ -461,7 +439,7 @@ async function mostrarFavoritasInicio() {
         <span class="tag tag-favorita">❤️ Favorita</span>
         <strong>${st.nombre}</strong><br>
         Código postal: ${st.cp}<br>
-        Precio: ${st.precio}€
+        Precio: ${obtenerPrecioSeleccionado(st)}€
       `;
 
       div.addEventListener("click", () => {
@@ -472,15 +450,23 @@ async function mostrarFavoritasInicio() {
       contenedor.appendChild(div);
     });
   } catch (error) {
+    contenedor.innerHTML = "";
     console.error("Error al cargar favoritas iniciales:", error);
   }
 }
 
 function transformarEstacionAPI(st) {
+  const precioGasoleoA = parsearNumeroAPI(st["Precio Gasoleo A"]);
+  const precioGasolina95E5 = parsearNumeroAPI(st["Precio Gasolina 95 E5"]);
+  const precioGasolina98E5 = parsearNumeroAPI(st["Precio Gasolina 98 E5"]);
   return {
-    nombre: st["Rótulo"] + " " + st["Dirección"],
+    nombre: `${st["Rótulo"]} - ${st["Dirección"]} (${st["C.P."]})`,
     cp: st["C.P."],
-    precio: parsearNumeroAPI(st["Precio Gasoleo A"]),
+    precios: {
+      gasoleoA: precioGasoleoA,
+      gasolina95E5: precioGasolina95E5,
+      gasolina98E5: precioGasolina98E5
+    },
     lat: parsearNumeroAPI(st["Latitud"]),
     lng: parsearNumeroAPI(st["Longitud (WGS84)"])
 
@@ -494,6 +480,48 @@ function parsearNumeroAPI(valor) {
 
   const numero = parseFloat(valor.replace(",", ".").trim());
   return Number.isFinite(numero) ? numero : Number.NaN;
+}
+
+function obtenerPrecioSeleccionado(st) {
+  return st.precios[combustibleSeleccionado];
+}
+
+function tienePrecioSeleccionado(st) {
+  return Number.isFinite(obtenerPrecioSeleccionado(st));
+}
+
+async function cargarEstaciones() {
+  if (!estacionesCache) {
+    estacionesCache = fetch("https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/")
+      .then(res => {
+        if (!res.ok) {
+          throw new Error("No se pudieron cargar los datos");
+        }
+
+        return res.json();
+      })
+      .then(datosAPI => (
+        Array.isArray(datosAPI.ListaEESSPrecio)
+          ? datosAPI.ListaEESSPrecio
+            .map(transformarEstacionAPI)
+            .filter(st =>
+              (
+                Number.isFinite(st.precios["gasoleoA"]) ||
+                Number.isFinite(st.precios["gasolina95E5"]) ||
+                Number.isFinite(st.precios["gasolina98E5"])
+              ) &&
+              Number.isFinite(st.lat) &&
+              Number.isFinite(st.lng)
+            )
+          : []
+      ))
+      .catch(error => {
+        estacionesCache = null;
+        throw error;
+      });
+  }
+
+  return estacionesCache;
 }
 
 async function getCP(cp) {
@@ -522,6 +550,5 @@ async function getCP(cp) {
     return null;
   }
 }
-
 
 mostrarFavoritasInicio();
