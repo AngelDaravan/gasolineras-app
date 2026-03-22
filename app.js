@@ -1,7 +1,6 @@
 let resultadosActuales = [];
 let estacionesCache = null;
 let cargando = false;
-let combustibleSeleccionado = "gasoleoA";
 
 const boton = document.getElementById("buscar");
 const inputCP = document.getElementById("cp");
@@ -78,7 +77,7 @@ boton.addEventListener("click", async () => {
           distancia: distancia
         };
       })
-      .filter(st => st.distancia <= distanciaMaxima && tienePrecioSeleccionado(st));
+      .filter(st => st.distancia <= distanciaMaxima);
 
     resultadosActuales = calcularScore(listaConDistancias)
       .sort((a, b) => a.distancia - b.distancia);
@@ -125,15 +124,14 @@ function calcularScore(lista) {
   const pesoPrecio = prioridad / 100;
   const pesoDistancia = 1 - pesoPrecio;
 
-  const minPrecio = Math.min(...lista.map(obtenerPrecioSeleccionado));
-  const maxPrecio = Math.max(...lista.map(obtenerPrecioSeleccionado));
+  const minPrecio = Math.min(...lista.map(st => st.precio));
+  const maxPrecio = Math.max(...lista.map(st => st.precio));
   const minDistancia = Math.min(...lista.map(st => st.distancia));
   const maxDistancia = Math.max(...lista.map(st => st.distancia));
 
   return lista.map(st => {
-    const precioSeleccionado = obtenerPrecioSeleccionado(st);
     const precioNormalizado =
-      maxPrecio === minPrecio ? 0 : (precioSeleccionado - minPrecio) / (maxPrecio - minPrecio);
+      maxPrecio === minPrecio ? 0 : (st.precio - minPrecio) / (maxPrecio - minPrecio);
 
     const distanciaNormalizada =
       maxDistancia === minDistancia ? 0 : (st.distancia - minDistancia) / (maxDistancia - minDistancia);
@@ -175,7 +173,7 @@ function mostrarResultados(lista) {
   );
 
   const estacionMasBarata = lista.reduce((min, st) =>
-    obtenerPrecioSeleccionado(st) < obtenerPrecioSeleccionado(min) ? st : min
+    st.precio < min.precio ? st : min
   );
 
   const estacionMejorOpcion = lista.reduce((min, st) =>
@@ -242,7 +240,7 @@ function mostrarResultados(lista) {
       <p class="descripcion">${descripcion}</p>
       <strong>${st.nombre}</strong><br>
       Código postal: ${st.cp}<br>
-      Precio: ${obtenerPrecioSeleccionado(st)}€<br>
+      Precio: ${st.precio}€<br>
       Distancia: ${st.distancia.toFixed(2)} km<br>
       Score: ${st.score.toFixed(3)}<br>
       <button onclick="toggleFavorito('${st.nombre}')">
@@ -273,7 +271,7 @@ function mostrarResultados(lista) {
       div.innerHTML = `
         <strong>${st.nombre}</strong><br>
         Código postal: ${st.cp}<br>
-        Precio: ${obtenerPrecioSeleccionado(st)}€<br>
+        Precio: ${st.precio}€<br>
         Distancia: ${st.distancia.toFixed(2)} km<br>
         Score: ${st.score.toFixed(3)}<br>
         <button onclick="toggleFavorito('${st.nombre}')">
@@ -331,6 +329,18 @@ function mostrarError(msg) {
   contenedor.innerHTML = `<p class="mensaje">${msg}</p>`;
 }
 
+function ordenarResultados(tipo) {
+  if (resultadosActuales.length === 0) return;
+
+  if (tipo === "asc") {
+    resultadosActuales.sort((a, b) => a.precio - b.precio);
+  } else {
+    resultadosActuales.sort((a, b) => b.precio - a.precio);
+  }
+
+  mostrarResultados(resultadosActuales);
+}
+
 function calcularDistancia(lat1, lon1, lat2, lon2) {
   const radioTierra = 6371; // km
 
@@ -353,9 +363,9 @@ function ordenarResultados(tipo) {
   if (resultadosActuales.length === 0) return;
 
   if (tipo === "asc") {
-    resultadosActuales.sort((a, b) => obtenerPrecioSeleccionado(a) - obtenerPrecioSeleccionado(b));
+    resultadosActuales.sort((a, b) => a.precio - b.precio);
   } else if (tipo === "desc") {
-    resultadosActuales.sort((a, b) => obtenerPrecioSeleccionado(b) - obtenerPrecioSeleccionado(a));
+    resultadosActuales.sort((a, b) => b.precio - a.precio);
   } else if (tipo === "distancia") {
     resultadosActuales.sort((a, b) => a.distancia - b.distancia);
   }
@@ -408,9 +418,7 @@ async function mostrarFavoritasInicio() {
 
     const stations = await cargarEstaciones();
 
-    const favoritas = stations.filter(st =>
-      favoritos.includes(st.nombre) && tienePrecioSeleccionado(st)
-    );
+    const favoritas = stations.filter(st => favoritos.includes(st.nombre));
 
     if (favoritas.length === 0) {
       contenedor.innerHTML = "";
@@ -439,7 +447,7 @@ async function mostrarFavoritasInicio() {
         <span class="tag tag-favorita">❤️ Favorita</span>
         <strong>${st.nombre}</strong><br>
         Código postal: ${st.cp}<br>
-        Precio: ${obtenerPrecioSeleccionado(st)}€
+        Precio: ${st.precio}€
       `;
 
       div.addEventListener("click", () => {
@@ -456,22 +464,21 @@ async function mostrarFavoritasInicio() {
 }
 
 function transformarEstacionAPI(st) {
-  const precioGasoleoA = parsearNumeroAPI(st["Precio Gasoleo A"]);
-  const precioGasolina95E5 = parsearNumeroAPI(st["Precio Gasolina 95 E5"]);
-  const precioGasolina98E5 = parsearNumeroAPI(st["Precio Gasolina 98 E5"]);
+  const precios = [
+    { tipo: "gasoleoA", nombre: "Gasóleo A", valor: parsearNumeroAPI(st["Precio Gasoleo A"]) },
+    { tipo: "gasolina95E5", nombre: "Gasolina 95 E5", valor: parsearNumeroAPI(st["Precio Gasolina 95 E5"]) },
+    { tipo: "gasolina98E5", nombre: "Gasolina 98 E5", valor: parsearNumeroAPI(st["Precio Gasolina 98 E5"]) }
+  ].filter(precio => Number.isFinite(precio.valor));
+
   return {
     nombre: `${st["Rótulo"]} - ${st["Dirección"]} (${st["C.P."]})`,
     cp: st["C.P."],
-    precios: {
-      gasoleoA: precioGasoleoA,
-      gasolina95E5: precioGasolina95E5,
-      gasolina98E5: precioGasolina98E5
-    },
+    precios,
     lat: parsearNumeroAPI(st["Latitud"]),
     lng: parsearNumeroAPI(st["Longitud (WGS84)"])
-
   };
 }
+
 
 function parsearNumeroAPI(valor) {
   if (typeof valor !== "string") {
@@ -480,14 +487,6 @@ function parsearNumeroAPI(valor) {
 
   const numero = parseFloat(valor.replace(",", ".").trim());
   return Number.isFinite(numero) ? numero : Number.NaN;
-}
-
-function obtenerPrecioSeleccionado(st) {
-  return st.precios[combustibleSeleccionado];
-}
-
-function tienePrecioSeleccionado(st) {
-  return Number.isFinite(obtenerPrecioSeleccionado(st));
 }
 
 async function cargarEstaciones() {
@@ -506,9 +505,9 @@ async function cargarEstaciones() {
             .map(transformarEstacionAPI)
             .filter(st =>
               (
-                Number.isFinite(st.precios["gasoleoA"]) ||
-                Number.isFinite(st.precios["gasolina95E5"]) ||
-                Number.isFinite(st.precios["gasolina98E5"])
+                Number.isFinite(st.precioGasoleoA) ||
+                Number.isFinite(st.precioGasolina95E5) ||
+                Number.isFinite(st.precioGasolina98E5)
               ) &&
               Number.isFinite(st.lat) &&
               Number.isFinite(st.lng)
