@@ -158,6 +158,51 @@ button:hover {
   color: #555;
 }
 
+.filtro-combustible {
+  margin-bottom: 14px;
+}
+
+.filtro-combustible label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.botones-combustible {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.combustible-btn {
+  margin: 0;
+  min-width: 130px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #1f2937;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.combustible-btn:hover {
+  background: #eef2f7;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.combustible-btn.active,
+.combustible-btn[aria-pressed="true"] {
+  background: #1f2937;
+  border-color: #111827;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.18);
+}
+
+.combustible-btn.active:hover,
+.combustible-btn[aria-pressed="true"]:hover {
+  background: #111827;
+}
+
 .skeleton-bloque {
   margin-top: 10px;
 }
@@ -242,5 +287,13 @@ button:hover {
 @media (max-width: 768px) {
   .panel-superior {
     grid-template-columns: 1fr;
+  }
+
+  .botones-combustible {
+    flex-direction: column;
+  }
+
+  .combustible-btn {
+    width: 100%;
   }
 }

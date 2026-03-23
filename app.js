@@ -1,6 +1,7 @@
 let resultadosActuales = [];
 let estacionesCache = null;
 let cargando = false;
+let ultimaBusqueda = null;
 
 const boton = document.getElementById("buscar");
 const inputCP = document.getElementById("cp");
@@ -9,7 +10,13 @@ const valorDistancia = document.getElementById("valorDistancia");
 const controles = document.getElementById("controlesOrden");
 const sliderPrioridad = document.getElementById("prioridadScore");
 const textoPrioridad = document.getElementById("textoPrioridad");
+const contenedorCombustible = document.querySelector(".botones-combustible");
 const botonPruebaJson = document.getElementById("prueba-json");
+const tiposCombustible = {
+  diesel: "gasoleoA",
+  "95": "gasolina95E5",
+  "98": "gasolina98E5"
+};
 
 console.log(sliderDistancia);
 console.log(valorDistancia);
@@ -30,6 +37,7 @@ document.getElementById("orden-distancia").addEventListener("click", () => {
 //mostar el valor del slider para distancia
 sliderDistancia.addEventListener("input", () => {
   valorDistancia.textContent = sliderDistancia.value;
+  actualizarBusqueda();
 });
 
 boton.addEventListener("click", async () => {
@@ -52,8 +60,6 @@ boton.addEventListener("click", async () => {
   try {
     mostrarSkeletonResultados();
 
-    const stations = await cargarEstaciones();
-
     const codigoPostalUsuario = await getCP(cp);
 
     if (!codigoPostalUsuario) {
@@ -61,28 +67,8 @@ boton.addEventListener("click", async () => {
       return;
     }
 
-    const distanciaMaxima = Number(sliderDistancia.value);
-
-    const listaConDistancias = stations
-      .map(st => {
-        const distancia = calcularDistancia(
-          codigoPostalUsuario.lat,
-          codigoPostalUsuario.lng,
-          st.lat,
-          st.lng
-        );
-
-        return {
-          ...st,
-          distancia: distancia
-        };
-      })
-      .filter(st => st.distancia <= distanciaMaxima);
-
-    resultadosActuales = calcularScore(listaConDistancias)
-      .sort((a, b) => a.distancia - b.distancia);
-
-    mostrarResultados(resultadosActuales);
+    ultimaBusqueda = { cp, codigoPostalUsuario };
+    await actualizarBusqueda(true);
   } catch (error) {
     mostrarError("Ha ocurrido un error al cargar los datos");
     console.error(error);
@@ -115,7 +101,96 @@ sliderPrioridad.addEventListener("input", () => {
   } else {
     textoPrioridad.textContent = "Equilibrado";
   }
+
+  actualizarBusqueda();
 });
+
+if (contenedorCombustible) {
+  contenedorCombustible.addEventListener("click", (event) => {
+    const botonSeleccionado = event.target.closest(".combustible-btn");
+
+    if (!botonSeleccionado || !contenedorCombustible.contains(botonSeleccionado)) {
+      return;
+    }
+
+    contenedorCombustible.querySelectorAll(".combustible-btn").forEach((boton) => {
+      const estaActivo = boton === botonSeleccionado;
+      boton.classList.toggle("active", estaActivo);
+      boton.setAttribute("aria-pressed", String(estaActivo));
+    });
+
+    actualizarBusqueda();
+  });
+}
+
+async function actualizarBusqueda(forzar = false) {
+  if (!forzar && (!ultimaBusqueda || resultadosActuales.length === 0)) {
+    return;
+  }
+
+  mostrarFavoritasInicio();
+
+  if ((cargando && !forzar) || !ultimaBusqueda) {
+    return;
+  }
+
+  const stations = await cargarEstaciones();
+  const combustibleSeleccionado = getCombustibleSeleccionado();
+  const distanciaMaxima = Number(sliderDistancia.value);
+
+  const estacionesFiltradas = stations
+    .map((st) => {
+      const precioCombustible = obtenerPrecioCombustible(st, combustibleSeleccionado);
+
+      if (!precioCombustible) {
+        return null;
+      }
+
+      return {
+        ...st,
+        precio: precioCombustible.valor,
+        tipoCombustible: precioCombustible.tipo,
+        nombreCombustible: precioCombustible.nombre
+      };
+    })
+    .filter(Boolean);
+
+  const listaConDistancias = estacionesFiltradas
+    .map(st => {
+      const distancia = calcularDistancia(
+        ultimaBusqueda.codigoPostalUsuario.lat,
+        ultimaBusqueda.codigoPostalUsuario.lng,
+        st.lat,
+        st.lng
+      );
+
+      return {
+        ...st,
+        distancia: distancia
+      };
+    })
+    .filter(st => st.distancia <= distanciaMaxima);
+
+  resultadosActuales = calcularScore(listaConDistancias)
+    .sort((a, b) => a.distancia - b.distancia);
+
+  mostrarResultados(resultadosActuales);
+}
+
+function getCombustibleSeleccionado() {
+  const botonActivo = contenedorCombustible?.querySelector(".combustible-btn.active");
+  return botonActivo?.dataset.combustible ?? "diesel";
+}
+
+function obtenerPrecioCombustible(estacion, combustibleSeleccionado = getCombustibleSeleccionado()) {
+  const tipoBuscado = tiposCombustible[combustibleSeleccionado];
+
+  if (!tipoBuscado || !Array.isArray(estacion.precios)) {
+    return null;
+  }
+
+  return estacion.precios.find((precio) => precio.tipo === tipoBuscado) ?? null;
+}
 
 //slider que calcula la puntuacion
 function calcularScore(lista) {
@@ -240,7 +315,7 @@ function mostrarResultados(lista) {
       <p class="descripcion">${descripcion}</p>
       <strong>${st.nombre}</strong><br>
       Código postal: ${st.cp}<br>
-      Precio: ${st.precio}€<br>
+      ${st.nombreCombustible}: ${st.precio}€<br>
       Distancia: ${st.distancia.toFixed(2)} km<br>
       Score: ${st.score.toFixed(3)}<br>
       <button onclick="toggleFavorito('${st.nombre}')">
@@ -271,7 +346,7 @@ function mostrarResultados(lista) {
       div.innerHTML = `
         <strong>${st.nombre}</strong><br>
         Código postal: ${st.cp}<br>
-        Precio: ${st.precio}€<br>
+        ${st.nombreCombustible}: ${st.precio}€<br>
         Distancia: ${st.distancia.toFixed(2)} km<br>
         Score: ${st.score.toFixed(3)}<br>
         <button onclick="toggleFavorito('${st.nombre}')">
@@ -440,6 +515,11 @@ async function mostrarFavoritasInicio() {
     contenedor.appendChild(subtitulo);
 
     favoritas.forEach(st => {
+      const precioCombustible = obtenerPrecioCombustible(st);
+      const textoPrecio = precioCombustible
+        ? `${precioCombustible.nombre}: ${precioCombustible.valor}€`
+        : "Sin precio para este combustible";
+
       const div = document.createElement("div");
       div.classList.add("resultado");
 
@@ -447,7 +527,7 @@ async function mostrarFavoritasInicio() {
         <span class="tag tag-favorita">❤️ Favorita</span>
         <strong>${st.nombre}</strong><br>
         Código postal: ${st.cp}<br>
-        Precio: ${st.precio}€
+        ${textoPrecio}
       `;
 
       div.addEventListener("click", () => {
@@ -504,11 +584,7 @@ async function cargarEstaciones() {
           ? datosAPI.ListaEESSPrecio
             .map(transformarEstacionAPI)
             .filter(st =>
-              (
-                Number.isFinite(st.precioGasoleoA) ||
-                Number.isFinite(st.precioGasolina95E5) ||
-                Number.isFinite(st.precioGasolina98E5)
-              ) &&
+              st.precios.length > 0 &&
               Number.isFinite(st.lat) &&
               Number.isFinite(st.lng)
             )
