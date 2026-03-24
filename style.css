@@ -285,6 +285,31 @@ button:hover {
 }
 
 @media (max-width: 768px) {
+  h1 {
+   font-size: 3rem;
+   line-height: 1.1;
+ }
+  
+  .buscador {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .buscador input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .controles-orden {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  
   .panel-superior {
     grid-template-columns: 1fr;
   }
@@ -296,4 +321,12 @@ button:hover {
   .combustible-btn {
     width: 100%;
   }
+
+  .slider-labels {
+   align-items: center;
+   gap: 10px;
+ }
+ .slider-labels span {
+   font-size: 0.95rem;
+ }    
 }

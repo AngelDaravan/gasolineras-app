@@ -314,6 +314,7 @@ function mostrarResultados(lista) {
       ${etiquetas.join(" ")}
       <p class="descripcion">${descripcion}</p>
       <strong>${st.nombre}</strong><br>
+      Dirección: ${st.direccion}<br>
       Código postal: ${st.cp}<br>
       ${st.nombreCombustible}: ${st.precio}€<br>
       Distancia: ${st.distancia.toFixed(2)} km<br>
@@ -345,6 +346,7 @@ function mostrarResultados(lista) {
 
       div.innerHTML = `
         <strong>${st.nombre}</strong><br>
+        Dirección: ${st.direccion}<br>
         Código postal: ${st.cp}<br>
         ${st.nombreCombustible}: ${st.precio}€<br>
         Distancia: ${st.distancia.toFixed(2)} km<br>
@@ -551,7 +553,8 @@ function transformarEstacionAPI(st) {
   ].filter(precio => Number.isFinite(precio.valor));
 
   return {
-    nombre: `${st["Rótulo"]} - ${st["Dirección"]} (${st["C.P."]})`,
+    nombre: `${st["Rótulo"]} - ${st["Localidad"]} (${st["C.P."]})`,
+    direccion: st["Dirección"],
     cp: st["C.P."],
     precios,
     lat: parsearNumeroAPI(st["Latitud"]),
