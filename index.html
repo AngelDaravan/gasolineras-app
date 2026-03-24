@@ -11,17 +11,22 @@
 
   <div class="panel-superior">
     <div class="buscador">
-      <input
-        type="text"
-        id="provincia"
-        placeholder="Provincia"
-      />
+      
+      <select id="provincia">
+        <option value="">Selecciona provincia</option>
+      </select><br>
 
-      <input
-        type="text"
-        id="localidad"
-        placeholder="Localidad"
-      />
+      <div class="autocomplete">
+        <input
+          type="text"
+          id="localidad"
+          list="listaLocalidades"
+          placeholder="Escribe una población"
+          autocomplete="off"
+        />
+        <datalist id="listaLocalidades"></datalist>
+        <div id="sugerenciasLocalidad" class="sugerencias"></div>
+      </div>
 
       <input
         type="text"
@@ -54,7 +59,7 @@
         <label>Combustible</label>
         <div class="botones-combustible">
           <button type="button" class="combustible-btn active" data-combustible="diesel" aria-pressed="true">
-            🟢 Diésel
+            🟢 Gasoleo A
           </button>
           <button type="button" class="combustible-btn" data-combustible="95" aria-pressed="false">
             🟡 Gasolina 95

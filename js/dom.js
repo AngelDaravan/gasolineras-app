@@ -8,5 +8,8 @@ export const elements = {
   textoPrioridad: document.getElementById("textoPrioridad"),
   contenedorCombustible: document.querySelector(".botones-combustible"),
   contenedorResultados: document.getElementById("resultados"),
-  contenedorFavoritas: document.getElementById("favoritasInicio")
+  contenedorFavoritas: document.getElementById("favoritasInicio"),
+  provincia: document.getElementById("provincia"),
+  inputLocalidad: document.getElementById("localidad"),
+  sugerenciasLocalidad: document.getElementById("sugerenciasLocalidad")
 };

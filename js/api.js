@@ -12,6 +12,8 @@ function transformarEstacionAPI(st) {
   return {
     nombre: `${st["Rótulo"]} - ${st["Localidad"]} (${st["C.P."]})`,
     direccion: st["Dirección"],
+    provincia: st["Provincia"],
+    localidad: st["Localidad"],
     cp: st["C.P."],
     precios,
     lat: parsearNumeroAPI(st["Latitud"]),
@@ -74,4 +76,31 @@ export async function getCP(cp) {
     console.error("Error consultando GeoNames:", error);
     return null;
   }
+}
+
+export async function cargarProvincias() {
+  const res = await fetch("./data/provincias.json");
+  
+  if (!res.ok) {
+      throw new Error("No se pudieron cargar las provincias");
+  }
+
+  const grupos = await res.json();
+
+  const select = document.getElementById("provincia");
+  select.innerHTML = '<option value="">Selecciona provincia</option>';
+
+  grupos.forEach((grupo) => {
+    const optgroup = document.createElement("optgroup");
+    optgroup.label = grupo.comunidad;
+
+    grupo.provincias.forEach((provincia) => {
+      const option = document.createElement("option");
+      option.value = provincia;
+      option.textContent = provincia;
+      optgroup.appendChild(option);
+    });
+
+    select.appendChild(optgroup);
+  });
 }

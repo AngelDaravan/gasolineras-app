@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
@@ -20,6 +26,16 @@ h1 {
   padding: 10px;
   margin-bottom: 12px;
   width: 200px;
+}
+
+.buscador select,
+.buscador input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  margin-bottom: 12px;
 }
 
 .filtro-distancia {
@@ -329,4 +345,38 @@ button:hover {
  .slider-labels span {
    font-size: 0.95rem;
  }    
+}
+
+.autocomplete {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.sugerencias {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.sugerencia-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  background: white;
+  cursor: pointer;
+}
+
+.sugerencia-item:hover {
+  background: #f5f5f5;
 }

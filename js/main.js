@@ -1,7 +1,7 @@
 import { tiposCombustible } from "./config.js";
 import { elements } from "./dom.js";
 import { state } from "./state.js";
-import { cargarEstaciones, getCP } from "./api.js";
+import { cargarEstaciones, cargarProvincias, getCP } from "./api.js";
 import { obtenerFavoritos, guardarFavoritos } from "./favorites.js";
 import {
   mostrarControles,
@@ -12,6 +12,11 @@ import {
   renderFavoritasInicio
 } from "./render.js";
 import { calcularDistancia } from "./utils.js";
+import { 
+  actualizarLocalidadesPorProvincia, 
+  normalizarTexto,
+  mostrarSugerenciasLocalidad,
+  limpiarSugerenciasLocalidad } from "./catalogs.js";
 
 function getCombustibleSeleccionado() {
   const botonActivo = elements.contenedorCombustible?.querySelector(".combustible-btn.active");
@@ -49,6 +54,47 @@ function calcularScore(lista) {
       score
     };
   });
+}
+
+function obtenerCpMasFrecuente(estaciones) {
+  const contador = new Map();
+
+  estaciones.forEach((st) => {
+    if (!st.cp) {
+      return;
+    }
+
+    contador.set(st.cp, (contador.get(st.cp) ?? 0) + 1);
+  });
+
+  return Array.from(contador.entries())
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+}
+
+function obtenerReferenciaLocalidad(estaciones, provincia, localidad) {
+  const provinciaNormalizada = normalizarTexto(provincia);
+  const localidadNormalizada = normalizarTexto(localidad);
+
+  const coincidencias = estaciones.filter((st) =>
+    normalizarTexto(st.provincia ?? "") === provinciaNormalizada &&
+    st.localidad &&
+    normalizarTexto(st.localidad) === localidadNormalizada &&
+    Number.isFinite(st.lat) &&
+    Number.isFinite(st.lng)
+  );
+
+  if (coincidencias.length === 0) {
+    return null;
+  }
+
+  const lat = coincidencias.reduce((total, st) => total + st.lat, 0) / coincidencias.length;
+  const lng = coincidencias.reduce((total, st) => total + st.lng, 0) / coincidencias.length;
+
+  return {
+    cp: obtenerCpMasFrecuente(coincidencias),
+    lat,
+    lng
+  };
 }
 
 async function actualizarBusqueda(forzar = false) {
@@ -172,6 +218,10 @@ function inicializarEventos() {
     ordenarResultados("distancia");
   });
 
+  elements.provincia.addEventListener("change", async () => {
+    await actualizarLocalidadesPorProvincia();
+  });
+
   elements.sliderDistancia.addEventListener("input", () => {
     elements.valorDistancia.textContent = elements.sliderDistancia.value;
     actualizarBusqueda();
@@ -187,9 +237,14 @@ function inicializarEventos() {
     elements.boton.textContent = "⏳ Buscando...";
 
     const cp = elements.inputCP.value.trim();
+    const provincia = elements.provincia.value.trim();
+    const localidad = elements.inputLocalidad.value.trim();
 
-    if (cp.length !== 5) {
-      mostrarError("Introduce un código postal válido (5 cifras)");
+    const busquedaPorCP = cp.length === 5;
+    const busquedaPorLocalidad = provincia && localidad;
+
+    if (!busquedaPorCP && !busquedaPorLocalidad) {
+      mostrarError("Introduce un código postal válido o selecciona provincia y población");
       state.cargando = false;
       elements.boton.disabled = false;
       elements.boton.textContent = "🔎 Buscar";
@@ -199,14 +254,28 @@ function inicializarEventos() {
     try {
       mostrarSkeletonResultados();
 
-      const codigoPostalUsuario = await getCP(cp);
+      const stations = await cargarEstaciones();
+      let codigoPostalUsuario = null;
+
+      if (busquedaPorCP) {
+        codigoPostalUsuario = await getCP(cp);
+      } else if (busquedaPorLocalidad) {
+        codigoPostalUsuario = obtenerReferenciaLocalidad(stations, provincia, localidad);
+      }
 
       if (!codigoPostalUsuario) {
-        mostrarError("No se encontraron coordenadas para ese código postal");
+        mostrarError(
+          busquedaPorCP
+            ? "No se encontraron coordenadas para ese código postal"
+            : "No se encontraron coordenadas para esa provincia y población"
+        );
         return;
       }
 
-      state.ultimaBusqueda = { cp, codigoPostalUsuario };
+      state.ultimaBusqueda = {
+        cp: busquedaPorCP ? cp : codigoPostalUsuario.cp,
+        codigoPostalUsuario
+      };
       await actualizarBusqueda(true);
     } catch (error) {
       mostrarError("Ha ocurrido un error al cargar los datos");
@@ -242,6 +311,21 @@ function inicializarEventos() {
     actualizarBusqueda();
   });
 
+  elements.provincia.addEventListener("change", () => {
+    elements.inputLocalidad.value = "";
+    limpiarSugerenciasLocalidad();
+  });
+
+  elements.inputLocalidad.addEventListener("input", () => {
+    mostrarSugerenciasLocalidad();
+  });
+
+  elements.inputLocalidad.addEventListener("blur", () => {
+    setTimeout(() => {
+      limpiarSugerenciasLocalidad();
+    }, 150);
+  });
+
   if (elements.contenedorCombustible) {
     elements.contenedorCombustible.addEventListener("click", (event) => {
       const botonSeleccionado = event.target.closest(".combustible-btn");
@@ -264,5 +348,8 @@ function inicializarEventos() {
 window.toggleFavorito = toggleFavorito;
 
 mostrarControles(false);
+cargarProvincias().catch((error) => {
+  console.error("Error al cargar provincias:", error);
+});
 inicializarEventos();
 mostrarFavoritasInicio();
