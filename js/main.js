@@ -165,9 +165,9 @@ function ordenarResultados(tipo) {
 
 async function mostrarFavoritasInicio() {
   const favoritos = obtenerFavoritos();
-  elements.contenedorFavoritas.innerHTML = "";
 
   if (favoritos.length === 0) {
+    renderFavoritasInicio([], obtenerPrecioCombustible, () => {});
     return;
   }
 
@@ -186,7 +186,7 @@ async function mostrarFavoritasInicio() {
       }
     );
   } catch (error) {
-    elements.contenedorFavoritas.innerHTML = "";
+    renderFavoritasInicio([], obtenerPrecioCombustible, () => {});
     console.error("Error al cargar favoritas iniciales:", error);
   }
 }

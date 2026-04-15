@@ -17,6 +17,14 @@ function crearSkeletonCard() {
   `;
 }
 
+function obtenerSubtituloFavoritas() {
+  return document.getElementById("descripcionFavoritas");
+}
+
+function obtenerListaFavoritas() {
+  return document.getElementById("listaFavoritasInicio");
+}
+
 export function mostrarSkeletonResultados() {
   mostrarControles(false);
   elements.contenedorResultados.innerHTML = `
@@ -30,7 +38,18 @@ export function mostrarSkeletonResultados() {
 }
 
 export function mostrarSkeletonFavoritas() {
-  elements.contenedorFavoritas.innerHTML = `
+  const subtitulo = obtenerSubtituloFavoritas();
+  const listaFavoritas = obtenerListaFavoritas();
+
+  if (subtitulo) {
+    subtitulo.textContent = "Cargando tus favoritas...";
+  }
+
+  if (!listaFavoritas) {
+    return;
+  }
+
+  listaFavoritas.innerHTML = `
     <div class="skeleton-bloque">
       <div class="skeleton skeleton-heading"></div>
       ${crearSkeletonCard()}
@@ -48,7 +67,7 @@ function construirTarjetaResultado(st, opciones = {}) {
   const favoritos = obtenerFavoritos();
   const esFavorita = favoritos.includes(st.nombre);
   const etiquetaFavorita = esFavorita
-    ? `<span class="tag tag-favorita">❤️ Favorita</span>`
+    ? `<span class="tag tag-favorita">Favorita</span>`
     : "";
   const descripcion = opciones.descripcion ?? "";
   const etiquetas = opciones.etiquetas ?? [];
@@ -58,13 +77,22 @@ function construirTarjetaResultado(st, opciones = {}) {
     ${etiquetas.join(" ")}
     ${descripcion ? `<p class="descripcion">${descripcion}</p>` : ""}
     <strong>${st.nombre}</strong><br>
-    Dirección: ${st.direccion}<br>
-    Código postal: ${st.cp}<br>
-    ${st.nombreCombustible}: ${st.precio}€<br>
+    <div>
+      Direccion:
+      <a
+        href="https://www.google.com/maps?q=${st.lat},${st.lng}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        ${st.direccion}
+      </a>
+    </div>
+    Codigo postal: ${st.cp}<br>
+    ${st.nombreCombustible}: ${st.precio} EUR<br>
     Distancia: ${st.distancia.toFixed(2)} km<br>
-    Score: ${st.score.toFixed(3)}<br>
+    Puntuacion prioridad: ${st.score.toFixed(3)}<br>
     <button onclick="toggleFavorito('${st.nombre}')">
-      ${esFavorita ? "★ Quitar de favoritos" : "☆ Añadir a favoritos"}
+      ${esFavorita ? "Quitar de favoritos" : "Anadir a favoritos"}
     </button>
   `;
 }
@@ -124,21 +152,21 @@ export function mostrarResultados(lista) {
     let descripcion = "";
 
     if (esMejorOpcion) {
-      etiquetas.push(`<span class="tag tag-mejor">⭐ Mejor opción</span>`);
-      descripcion = "La mejor combinación entre cercanía y precio";
+      etiquetas.push(`<span class="tag tag-mejor">Mejor opcion</span>`);
+      descripcion = "La mejor combinacion entre cercania y precio";
     }
 
     if (esMasCercana) {
-      etiquetas.push(`<span class="tag tag-cercana">📍 Más cercana</span>`);
+      etiquetas.push(`<span class="tag tag-cercana">Mas cercana</span>`);
       if (!descripcion) {
-        descripcion = "La opción más cercana para repostar rápido";
+        descripcion = "La opcion mas cercana para repostar rapido";
       }
     }
 
     if (esMasBarata) {
-      etiquetas.push(`<span class="tag tag-barata">💸 Más barata</span>`);
+      etiquetas.push(`<span class="tag tag-barata">Mas barata</span>`);
       if (!descripcion) {
-        descripcion = "La opción más económica aunque esté más lejos";
+        descripcion = "La opcion mas economica aunque este mas lejos";
       }
     }
 
@@ -162,34 +190,38 @@ export function mostrarResultados(lista) {
 }
 
 export function renderFavoritasInicio(favoritas, obtenerPrecioCombustible, onSeleccionarFavorita) {
-  elements.contenedorFavoritas.innerHTML = "";
+  const subtitulo = obtenerSubtituloFavoritas();
+  const listaFavoritas = obtenerListaFavoritas();
 
-  if (favoritas.length === 0) {
+  if (!listaFavoritas) {
     return;
   }
 
-  const titulo = document.createElement("h2");
-  titulo.textContent = "❤️ Tus gasolineras favoritas";
-  titulo.classList.add("titulo-bloque");
-  elements.contenedorFavoritas.appendChild(titulo);
+  listaFavoritas.innerHTML = "";
 
-  const subtitulo = document.createElement("p");
-  subtitulo.textContent = "Toca una favorita para buscar rápidamente";
-  subtitulo.classList.add("descripcion");
-  elements.contenedorFavoritas.appendChild(subtitulo);
+  if (favoritas.length === 0) {
+    if (subtitulo) {
+      subtitulo.textContent = "Aun no tienes favoritas. Anade alguna gasolinera para tenerla siempre a mano.";
+    }
+    return;
+  }
+
+  if (subtitulo) {
+    subtitulo.textContent = "Toca una favorita para buscar rapidamente.";
+  }
 
   favoritas.forEach((st) => {
     const precioCombustible = obtenerPrecioCombustible(st);
     const textoPrecio = precioCombustible
-      ? `${precioCombustible.nombre}: <strong>${precioCombustible.valor}€</strong>`
+      ? `${precioCombustible.nombre}: <strong>${precioCombustible.valor} EUR</strong>`
       : "Sin precio para este combustible";
 
     const div = document.createElement("div");
     div.classList.add("resultado");
     div.innerHTML = `
-      <span class="tag tag-favorita">❤️ Favorita</span>
+      <span class="tag tag-favorita">Favorita</span>
       <strong>${st.nombre}</strong><br>
-      Código postal: ${st.cp}<br>
+      Direccion: ${st.direccion}<br>
       ${textoPrecio}
     `;
 
@@ -197,6 +229,6 @@ export function renderFavoritasInicio(favoritas, obtenerPrecioCombustible, onSel
       onSeleccionarFavorita(st);
     });
 
-    elements.contenedorFavoritas.appendChild(div);
+    listaFavoritas.appendChild(div);
   });
 }

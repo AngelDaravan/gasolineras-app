@@ -14,6 +14,15 @@ h1 {
   margin-bottom: 20px;
 }
 
+a {
+  color: #0077cc;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
 .buscador {
   background: white;
   padding: 16px;
