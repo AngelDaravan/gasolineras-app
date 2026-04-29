@@ -71,29 +71,29 @@ function construirTarjetaResultado(st, opciones = {}) {
     : "";
   const descripcion = opciones.descripcion ?? "";
   const etiquetas = opciones.etiquetas ?? [];
+  const urlMapa = `https://www.google.com/maps?q=${st.lat},${st.lng}`;
+  const urlRuta = `https://www.google.com/maps/dir/?api=1&destination=${st.lat},${st.lng}`;
 
   return `
     ${etiquetaFavorita}
     ${etiquetas.join(" ")}
     ${descripcion ? `<p class="descripcion">${descripcion}</p>` : ""}
     <strong>${st.nombre}</strong><br>
-    <div>
-      Direccion:
-      <a
-        href="https://www.google.com/maps?q=${st.lat},${st.lng}"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        ${st.direccion}
-      </a>
-    </div>
+    Dirección: ${st.direccion}<br>
     Codigo postal: ${st.cp}<br>
     ${st.nombreCombustible}: ${st.precio} EUR<br>
     Distancia: ${st.distancia.toFixed(2)} km<br>
     Puntuacion prioridad: ${st.score.toFixed(3)}<br>
     <button onclick="toggleFavorito('${st.nombre}')">
-      ${esFavorita ? "Quitar de favoritos" : "Anadir a favoritos"}
+      ${esFavorita ? "⭐ Quitar de favoritos" : "⭐ Anadir a favoritos"}
     </button>
+    <a href="${urlMapa}" target="_blank">
+      <button>📍 Ver en mapa</button>
+    </a>
+
+    <a href="${urlRuta}" target="_blank">
+      <button>🚗 Cómo llegar</button>
+    </a>
   `;
 }
 

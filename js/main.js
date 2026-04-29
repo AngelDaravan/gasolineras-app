@@ -344,6 +344,40 @@ function inicializarEventos() {
     });
   }
 }
+// Aquí va el botón de mostrar y ocultar favoritas en la página de resultados
+const botonToggleFavoritas = document.getElementById("toggleFavoritas");
+const listaFavoritasInicio = document.getElementById("listaFavoritasInicio");
+
+// Estado inicial
+if (window.innerWidth < 768) {
+  listaFavoritasInicio.setAttribute("hidden", "");
+  botonToggleFavoritas.textContent = "▼";
+} else {
+  listaFavoritasInicio.removeAttribute("hidden");
+  botonToggleFavoritas.textContent = "▲";
+}
+
+// Click
+botonToggleFavoritas?.addEventListener("click", () => {
+  const estaOculto = listaFavoritasInicio.hasAttribute("hidden");
+
+  if (estaOculto) {
+    listaFavoritasInicio.removeAttribute("hidden");
+    botonToggleFavoritas.textContent = "▲";
+  } else {
+    listaFavoritasInicio.setAttribute("hidden", "");
+    botonToggleFavoritas.textContent = "▼";
+  }
+});
+
+const btnSubir = document.getElementById("btnSubir");
+
+btnSubir?.addEventListener("click", () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+});
 
 window.toggleFavorito = toggleFavorito;
 
